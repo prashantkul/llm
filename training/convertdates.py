@@ -17,7 +17,7 @@ def date_to_indices(date_string, vocab):
 
 def indices_to_date(indices, vocab):
     index_to_char = {v: k for k, v in vocab.items()}
-    return ''.join([index_to_char[i] for i in indices if i not in [vocab['<PAD>'], vocab['<START>'], vocab['<END>']]])
+    return ''.join([index_to_char[i] for i in indices if i not in [vocab['<PAD>'], vocab['<START>'], vocab['<END>'], vocab['<UNK>']]])
 
 def prepare_date_data(input_dates, output_dates, vocab, max_length):
     def tokenize(date_string):

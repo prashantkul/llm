@@ -47,15 +47,15 @@ def convert_date(model, input_date, vocab, max_length):
 # Test examples
 test_inputs = [
     "2023-07-26",
-    # "15/08/1947",
-    # "Dec 25, 1999",
-    # "1985-10-21",
-    # "07/04/2022",
-    # "November 11, 2011",
-    # "22 Jan 2000",
-    # "1969/07/20",
-    # "April 1, 2025",
-    # "31-12-2020"
+    "15/08/1947",
+    "Dec 25, 1999",
+    "1985-10-21",
+    "07/04/2022",
+    "November 11, 2011",
+    "22 Jan 2000",
+    "1969/07/20",
+    "April 1, 2025",
+    "31-12-2020"
 ]
 
 print("Testing the model on various date formats:")
@@ -64,6 +64,6 @@ for test_input in test_inputs:
     print(f"Input: {test_input} -> Output: {converted_date}")
     
     
-print("Vocabulary:")
-for token, index in date_vocab.items():
-    print(f"{token}: {index}")
+# print("Vocabulary:")
+# for token, index in date_vocab.items():
+#     print(f"{token}: {index}")

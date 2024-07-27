@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 
 # Generate the dataset
-input_dates, output_dates = generate_date_dataset(20000)  
+input_dates, output_dates = generate_date_dataset(25000)  
 
 # Create the vocabulary for the model. The date vocab includes digits, common date separators, and month names.
 date_vocab = create_date_vocab()

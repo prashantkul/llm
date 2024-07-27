@@ -16,11 +16,6 @@ def scaled_dot_product(q, k, v, mask=None):
     return values, attention
 
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import math
-
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
         super().__init__()

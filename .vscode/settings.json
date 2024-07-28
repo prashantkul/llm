@@ -7,6 +7,10 @@
         {
             "folderPath": "llm/encoder/",
             "color": "foldercolorizer.PaleTaupe"
+        },
+        {
+            "folderPath": "llm/data/",
+            "color": "foldercolorizer.SpringGreen"
         }
     ]
 }

@@ -1,0 +1,16 @@
+{
+    "folder-color.pathColors": [
+        {
+            "folderPath": "llm/decoder/",
+            "color": "foldercolorizer.LightRed"
+        },
+        {
+            "folderPath": "llm/encoder/",
+            "color": "foldercolorizer.PaleTaupe"
+        },
+        {
+            "folderPath": "llm/data/",
+            "color": "foldercolorizer.SpringGreen"
+        }
+    ]
+}

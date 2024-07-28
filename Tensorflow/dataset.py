@@ -6,22 +6,17 @@ import tensorflow_datasets as tfds
 import tensorflow as tf
 import tensorflow_text
 
+from typing import Iterator, Optional, Tuple
+
 
 class Dataset():
     """ Class to load and preprocess the dataset """
-    def __init__(self, dataset_name, batch_size, buffer_size):
-        self.dataset_name = dataset_name
-        self.batch_size = batch_size
-        self.buffer_size = buffer_size
-        self.dataset, self.info = tfds.load(name=dataset_name, with_info=True, as_supervised=True)
-        self.train_dataset, self.val_dataset = self.dataset['train'], self.dataset['validation']
-        self.tokenizer_en = tfds.deprecated.text.SubwordTextEncoder.build_from_corpus(
-            (en.numpy() for pt, en in self.train_dataset), target_vocab_size=2**13)
-        self.tokenizer_pt = tfds.deprecated.text.SubwordTextEncoder.build_from_corpus(
-            (pt.numpy() for pt, en in self.train_dataset), target_vocab_size=2**13)
-        self.input_vocab_size = self.tokenizer_pt.vocab_size + 2
-        self.target_vocab_size = self.tokenizer_en.vocab_size + 2
+    def __init__(self):
         self.max_length = 20
+        self.MAX_TOKENS = 128
+        self.BUFFER_SIZE = 20000
+        self.BATCH_SIZE = 64
+        self.tokenizers = self.build_tokenizer()
 
     def encode(self, pt, en):
         pt = [self.tokenizer_pt.vocab_size] + self.tokenizer_pt.encode(pt.numpy()) + [self.tokenizer_pt.vocab_size + 1]
@@ -37,17 +32,48 @@ class Dataset():
     def filter_max_length(self, x, y):
         return tf.logical_and(tf.size(x) <= self.max_length, tf.size(y) <= self.max_length)
 
-    def make_batches(self):
-        train_dataset = self.train_dataset.map(self.tf_encode)
-        train_dataset = train_dataset.filter(self.filter_max_length)
-        train_dataset = train_dataset.cache()
-        train_dataset = train_dataset.shuffle(self.buffer_size).padded_batch(self.batch_size)
-        train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
-
-        val_dataset = self.val_dataset.map(self.tf_encode)
-        val_dataset = val_dataset.filter(self.filter_max_length).padded_batch(self.batch_size)
-        return train_dataset, val_dataset
-
     def decode(self, en):
         return self.tokenizer_en.decode([i for i in en if i < self.tokenizer_en.vocab_size])
     
+    def build_tokenizer(self, model_name: Optional[str] = None):
+        if model_name is None:
+            model_name = 'ted_hrlr_translate_pt_en_converter'
+            
+        tf.keras.utils.get_file(
+                                f'{model_name}.zip',
+                                f'https://storage.googleapis.com/download.tensorflow.org/models/{model_name}.zip',
+                                cache_dir='.', cache_subdir='', extract=True
+                            )
+
+        tokenizers = tf.saved_model.load(model_name)
+        return tokenizers
+    
+    def tokenize(self, en_examples, tokenizers):
+        return tokenizers.en.tokenize(en_examples)
+        
+    
+    def detokenize(self, encoded, tokenizers):
+        return tokenizers.en.detokenize(encoded)
+
+    def tokens(self, encoded, tokenizers):
+        return tokenizers.en.lookup(encoded)
+    
+    def prepare_batch(self, pt, en):
+        pt = self.tokenizers.pt.tokenize(pt)
+        pt = pt[:, :self.MAX_TOKENS]
+        pt = pt.to_tensor()
+        
+        en = self.tokenizers.en.tokenize(en)
+        en = en[:, :(self.MAX_TOKENS+1)]
+        en_inputs = en[:, :-1].to_tensor()  # Drop the [END] tokens
+        en_labels = en[:, 1:].to_tensor()   # Drop the [START] tokens
+        
+        return (pt, en_inputs), en_labels
+    
+    def make_batches(self, ds):
+            return (
+                ds
+                .shuffle(self.BUFFER_SIZE)
+                .batch(self.BATCH_SIZE)
+                .map(self.prepare_batch, tf.data.AUTOTUNE)
+                .prefetch(buffer_size=tf.data.AUTOTUNE))
